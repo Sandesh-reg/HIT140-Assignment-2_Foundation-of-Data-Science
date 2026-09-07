@@ -5,6 +5,7 @@ from pathlib import Path
 
 # Find the main project folder
 base_folder = Path(__file__).resolve().parents[2]
+output_folder = Path(__file__).parent
 
 # Load the raw data
 df = pd.read_excel(base_folder / "fbref_WC2026_Cards.xlsx")
@@ -24,22 +25,42 @@ data = data[data["90s"] >= 1].copy()
 # Calculate yellow cards per 90 minutes
 data["Yellow_Cards_Per_90"] = data["CrdY"] / data["90s"]
 
-# Save the cleaned dataset
-data.to_csv(
-    Path(__file__).parent / "discipline_cleaned.csv",
+# Stratified random sampling
+# Position is used as the stratification variable.
+defenders = data[data["Pos"] == "DF"].sample(
+    n=100,
+    random_state=42
+)
+
+midfielders = data[data["Pos"] == "MF"].sample(
+    n=100,
+    random_state=42
+)
+
+# Combine both groups into the final sample
+sample = pd.concat([defenders, midfielders])
+
+# Save the final sample
+sample.to_csv(
+    output_folder / "discipline_cleaned.csv",
     index=False
 )
 
-# Separate the two groups
-defenders = data[data["Pos"] == "DF"]["Yellow_Cards_Per_90"]
-midfielders = data[data["Pos"] == "MF"]["Yellow_Cards_Per_90"]
+# Get yellow-card rates for each group
+defender_rates = sample[
+    sample["Pos"] == "DF"
+]["Yellow_Cards_Per_90"]
+
+midfielder_rates = sample[
+    sample["Pos"] == "MF"
+]["Yellow_Cards_Per_90"]
 
 # Calculate descriptive statistics and 95% confidence intervals
 results = []
 
 for position, group in [
-    ("Defenders", defenders),
-    ("Midfielders", midfielders)
+    ("Defenders", defender_rates),
+    ("Midfielders", midfielder_rates)
 ]:
     mean = group.mean()
     median = group.median()
@@ -70,18 +91,22 @@ results_table = pd.DataFrame(results)
 print("\nDISCIPLINE ANALYSIS")
 print("===================")
 
-print("\nSample:")
-print("Total eligible players:", len(data))
+print("\nPopulation after eligibility filtering:")
+print("Defenders:", len(data[data["Pos"] == "DF"]))
+print("Midfielders:", len(data[data["Pos"] == "MF"]))
+
+print("\nStratified Random Sample:")
 print("Defenders:", len(defenders))
 print("Midfielders:", len(midfielders))
+print("Total sample:", len(sample))
 
 print("\nDescriptive Statistics:")
 print(results_table.round(3).to_string(index=False))
 
 # Welch two-sample t-test
 t_statistic, p_value = ttest_ind(
-    defenders,
-    midfielders,
+    defender_rates,
+    midfielder_rates,
     equal_var=False
 )
 
@@ -96,14 +121,14 @@ else:
 
 # Save statistical results
 results_table.to_csv(
-    Path(__file__).parent / "discipline_results.csv",
+    output_folder / "discipline_results.csv",
     index=False
 )
 
 # Create boxplot
 plt.figure(figsize=(8, 6))
 
-data.boxplot(
+sample.boxplot(
     column="Yellow_Cards_Per_90",
     by="Pos"
 )
@@ -116,7 +141,7 @@ plt.ylabel("Yellow Cards per 90 Minutes")
 plt.tight_layout()
 
 plt.savefig(
-    Path(__file__).parent / "discipline_boxplot.png",
+    output_folder / "discipline_boxplot.png",
     dpi=300
 )
 
