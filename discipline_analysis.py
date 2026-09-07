@@ -2,29 +2,32 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind, t
 
-# Load the discipline data
+# Load the data
 df = pd.read_excel("fbref_WC2026_Cards.xlsx")
 
 # Remove rows that are not player records
 df = df.dropna(subset=["Player"])
 
-# Remove unnecessary columns
+# Remove columns that are not needed
 df = df.drop(columns=["Rk", -9999])
 
 # Select defenders and midfielders
 data = df[df["Pos"].isin(["DF", "MF"])].copy()
 
-# Only include players who played at least 90 minutes
+# Keep players with at least one full 90-minute equivalent
 data = data[data["90s"] >= 1].copy()
 
 # Calculate yellow cards per 90 minutes
 data["Yellow_Cards_Per_90"] = data["CrdY"] / data["90s"]
 
+# Save the cleaned dataset
+data.to_csv("discipline_cleaned.csv", index=False)
+
 # Separate the two groups
 defenders = data[data["Pos"] == "DF"]["Yellow_Cards_Per_90"]
 midfielders = data[data["Pos"] == "MF"]["Yellow_Cards_Per_90"]
 
-# Descriptive statistics
+# Calculate descriptive statistics and 95% confidence intervals
 results = []
 
 for position, group in [
@@ -57,7 +60,15 @@ for position, group in [
 
 results_table = pd.DataFrame(results)
 
-print("\nDISCIPLINE RESULTS")
+print("\nDISCIPLINE ANALYSIS")
+print("===================")
+
+print("\nSample:")
+print("Total eligible players:", len(data))
+print("Defenders:", len(defenders))
+print("Midfielders:", len(midfielders))
+
+print("\nDescriptive Statistics:")
 print(results_table.round(3).to_string(index=False))
 
 # Welch two-sample t-test
@@ -67,16 +78,16 @@ t_statistic, p_value = ttest_ind(
     equal_var=False
 )
 
-print("\nWELCH TWO-SAMPLE T-TEST")
+print("\nWelch Two-Sample t-Test:")
 print("t-statistic:", round(t_statistic, 3))
 print("p-value:", round(p_value, 4))
 
 if p_value < 0.05:
-    print("There is a statistically significant difference.")
+    print("Result: Statistically significant difference.")
 else:
-    print("There is no statistically significant difference.")
+    print("Result: No statistically significant difference.")
 
-# Save results
+# Save statistical results
 results_table.to_csv("discipline_results.csv", index=False)
 
 # Create boxplot
@@ -93,5 +104,7 @@ plt.xlabel("Playing Position")
 plt.ylabel("Yellow Cards per 90 Minutes")
 
 plt.tight_layout()
+
 plt.savefig("discipline_boxplot.png", dpi=300)
+
 plt.show()
