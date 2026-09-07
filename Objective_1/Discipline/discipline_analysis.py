@@ -1,9 +1,13 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind, t
+from pathlib import Path
 
-# Load the data
-df = pd.read_excel("fbref_WC2026_Cards.xlsx")
+# Find the main project folder
+base_folder = Path(__file__).resolve().parents[2]
+
+# Load the raw data
+df = pd.read_excel(base_folder / "fbref_WC2026_Cards.xlsx")
 
 # Remove rows that are not player records
 df = df.dropna(subset=["Player"])
@@ -21,7 +25,10 @@ data = data[data["90s"] >= 1].copy()
 data["Yellow_Cards_Per_90"] = data["CrdY"] / data["90s"]
 
 # Save the cleaned dataset
-data.to_csv("discipline_cleaned.csv", index=False)
+data.to_csv(
+    Path(__file__).parent / "discipline_cleaned.csv",
+    index=False
+)
 
 # Separate the two groups
 defenders = data[data["Pos"] == "DF"]["Yellow_Cards_Per_90"]
@@ -88,7 +95,10 @@ else:
     print("Result: No statistically significant difference.")
 
 # Save statistical results
-results_table.to_csv("discipline_results.csv", index=False)
+results_table.to_csv(
+    Path(__file__).parent / "discipline_results.csv",
+    index=False
+)
 
 # Create boxplot
 plt.figure(figsize=(8, 6))
@@ -105,6 +115,9 @@ plt.ylabel("Yellow Cards per 90 Minutes")
 
 plt.tight_layout()
 
-plt.savefig("discipline_boxplot.png", dpi=300)
+plt.savefig(
+    Path(__file__).parent / "discipline_boxplot.png",
+    dpi=300
+)
 
 plt.show()
