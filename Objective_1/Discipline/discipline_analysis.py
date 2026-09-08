@@ -125,18 +125,18 @@ results_table.to_csv(
     index=False
 )
 
-# Create boxplot
-plt.figure(figsize=(8, 6))
-
-sample.boxplot(
+# Create boxplot and grab the axis directly to prevent blank figures
+ax = sample.boxplot(
     column="Yellow_Cards_Per_90",
-    by="Pos"
+    by="Pos",
+    figsize=(8, 6)
 )
 
-plt.title("Yellow Cards per 90 Minutes: Defenders vs Midfielders")
+# Apply formatting directly to the active plot axis
+ax.set_title("Yellow Cards per 90 Minutes: Defenders vs Midfielders")
 plt.suptitle("")
-plt.xlabel("Playing Position")
-plt.ylabel("Yellow Cards per 90 Minutes")
+ax.set_xlabel("Playing Position")
+ax.set_ylabel("Yellow Cards per 90 Minutes")
 
 plt.tight_layout()
 
