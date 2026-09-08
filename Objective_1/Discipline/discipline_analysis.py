@@ -1,3 +1,8 @@
+"""
+Analytic Question: Do defenders record a higher rate of yellow cards 
+per 90 minutes than midfielders in the 2026 FIFA World Cup?
+"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind, t
@@ -17,6 +22,8 @@ df = df.dropna(subset=["Player"])
 df = df.drop(columns=["Rk", -9999])
 
 # Select defenders and midfielders
+# Players with mixed position tags (e.g., DFMF, MFDF) are excluded so that
+# each player represents a single, unambiguous position category.
 data = df[df["Pos"].isin(["DF", "MF"])].copy()
 
 # Keep players with at least one full 90-minute equivalent
@@ -125,18 +132,18 @@ results_table.to_csv(
     index=False
 )
 
-# Create boxplot
-plt.figure(figsize=(8, 6))
-
-sample.boxplot(
+# Create boxplot and grab the axis directly to prevent blank figures
+ax = sample.boxplot(
     column="Yellow_Cards_Per_90",
-    by="Pos"
+    by="Pos",
+    figsize=(8, 6)
 )
 
-plt.title("Yellow Cards per 90 Minutes: Defenders vs Midfielders")
+# Apply formatting directly to the active plot axis
+ax.set_title("Yellow Cards per 90 Minutes: Defenders vs Midfielders")
 plt.suptitle("")
-plt.xlabel("Playing Position")
-plt.ylabel("Yellow Cards per 90 Minutes")
+ax.set_xlabel("Playing Position")
+ax.set_ylabel("Yellow Cards per 90 Minutes")
 
 plt.tight_layout()
 
