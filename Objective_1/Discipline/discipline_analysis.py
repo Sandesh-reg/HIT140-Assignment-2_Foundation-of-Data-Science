@@ -1,3 +1,8 @@
+"""
+Analytic Question: Do defenders record a higher rate of yellow cards 
+per 90 minutes than midfielders in the 2026 FIFA World Cup?
+"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind, t
@@ -17,6 +22,8 @@ df = df.dropna(subset=["Player"])
 df = df.drop(columns=["Rk", -9999])
 
 # Select defenders and midfielders
+# Players with mixed position tags (e.g., DFMF, MFDF) are excluded so that
+# each player represents a single, unambiguous position category.
 data = df[df["Pos"].isin(["DF", "MF"])].copy()
 
 # Keep players with at least one full 90-minute equivalent
